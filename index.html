@@ -605,6 +605,13 @@ pull();
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
   navigator.serviceWorker.register('sw.js').catch(function(){});
+  // A new version took over (sw.js skipWaiting + clients.claim): reload once so this open already
+  // runs it. Only when a worker was in charge before - a first install has nothing old to replace.
+  var hadSW = !!navigator.serviceWorker.controller, reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if (!hadSW || reloaded) return;
+    reloaded = true; location.reload();
+  });
 }
 </script>
 </body>
