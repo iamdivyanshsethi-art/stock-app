@@ -1,0 +1,14 @@
+{
+  "name": "Stock & Rates",
+  "short_name": "Stock",
+  "description": "Divyansh International - available stock and selling range",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F6F8F7",
+  "theme_color": "#1B4332",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

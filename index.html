@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stock &amp; Rates</title>
+<meta name="theme-color" content="#1B4332">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stock &amp; Rates">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root{
+    --green:#1B4332; --gold:#B8860B;
+    --ink:#12211B; --mute:#6B7A73; --line:#E3E9E5; --bg:#F6F8F7; --card:#FFFFFF;
+    --amber:#B45309; --amber-bg:#FFF8E1; --red:#B00020; --red-bg:#FCE8E6;
+    --ok:#1B7F4B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{background:var(--green);color:#fff;padding:calc(13px + env(safe-area-inset-top)) 16px 12px;
+    position:sticky;top:0;z-index:20}
+  .top{display:flex;align-items:flex-start;gap:10px}
+  .top .who2{flex:1;min-width:0}
+  .rf{flex:0 0 auto;background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;
+    width:38px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .rf.spin svg{animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .alert{margin:12px 16px 0;border-radius:8px;padding:9px 11px;font-size:12.5px;line-height:1.5}
+  .alert.w{background:var(--amber-bg);border:1px solid #F2E2B8;color:var(--amber)}
+  .alert.d{background:var(--red-bg);border:1px solid #F3C4C0;color:var(--red)}
+  .gate{max-width:520px;margin:28px auto;padding:0 16px}
+  .gate .box{background:#fff;border:1px solid var(--line);border-left:4px solid var(--green);
+    border-radius:11px;padding:18px 18px 16px}
+  .gate.d .box{border-left-color:#b3541e}
+  .gate h1{font-size:18px;margin:0 0 10px}
+  .gate p{margin:0 0 12px;font-size:14px}
+  .gate input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-size:16px;
+    margin:4px 0 12px;font-family:ui-monospace,Menlo,monospace}
+  .gate .err{color:var(--red);font-size:13px;margin:-4px 0 10px}
+  .ttl{font-size:17px;font-weight:700;letter-spacing:.2px}
+  .sub{font-size:12px;opacity:.75;margin-top:2px}
+  .search{margin-top:11px;position:relative}
+  .search input{width:100%;padding:11px 12px 11px 36px;border:0;border-radius:8px;font-size:16px}
+  .search svg{position:absolute;left:11px;top:11px;opacity:.45;color:var(--ink)}
+  .warn{margin:12px 16px 0;background:var(--amber-bg);border:1px solid #F2E2B8;color:var(--amber);
+    border-radius:8px;padding:9px 11px;font-size:12.5px}
+  .strips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 2px;scrollbar-width:none}
+  .strips::-webkit-scrollbar{display:none}
+  .strip{flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:9px 13px;cursor:pointer;min-width:104px}
+  .strip.on{border-color:var(--green);box-shadow:0 0 0 1.5px var(--green) inset}
+  .strip b{display:block;font-size:20px;line-height:1.1}
+  .strip span{font-size:11px;color:var(--mute);display:block;margin-top:3px}
+  .strip.w b{color:var(--amber)} .strip.d b{color:var(--red)}
+  .strip.g b{color:var(--ok)}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding:12px 16px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:999px;
+    padding:6px 13px;font-size:13px;cursor:pointer;color:var(--mute)}
+  .chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+  .subs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none}
+  .subs::-webkit-scrollbar{display:none}
+  .schip{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:6px;
+    padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--mute)}
+  .schip.on{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
+  .list{padding:0 12px 30px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:11px;margin-bottom:9px;
+    overflow:hidden}
+  .head{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer}
+  .bar{width:4px;align-self:stretch;border-radius:3px;background:var(--ok);flex:0 0 4px}
+  .bar.w{background:var(--amber)} .bar.d{background:var(--red)} .bar.n{background:#C9D2CD}
+  .who{flex:1;min-width:0}
+  .nm{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .meta{font-size:12px;color:var(--mute);margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;
+    align-items:center}
+  .rate{text-align:right;flex:0 0 auto}
+  .rate b{font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .rate span{display:block;font-size:11px;color:var(--mute)}
+  .norate{color:var(--amber);font-weight:600;font-size:13px}
+  .qty{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+  .qty.neg{color:var(--red)}
+  .tag{font-size:10.5px;font-weight:700;letter-spacing:.3px;padding:2px 6px;border-radius:4px}
+  .tag.w{background:var(--amber-bg);color:var(--amber)}
+  .tag.d{background:var(--red-bg);color:var(--red)}
+  .tag.p{background:#EEF2FF;color:#3730A3}
+  .caret{flex:0 0 auto;color:var(--mute);transition:transform .16s}
+  .card.open .caret{transform:rotate(180deg)}
+  .body{display:none;border-top:1px solid var(--line);padding:13px;background:#FBFDFC}
+  .card.open .body{display:block}
+  .lab{font-size:10.5px;font-weight:700;letter-spacing:.7px;color:var(--mute);margin-bottom:8px}
+  .locs{display:flex;flex-wrap:wrap;gap:6px}
+  .loc{background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:12px}
+  .loc b{font-variant-numeric:tabular-nums}
+  .loc.z{opacity:.4}
+  .loc.neg b{color:var(--red)}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+  .fact{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+  .fact span{display:block;font-size:10.5px;color:var(--mute);letter-spacing:.4px;font-weight:700}
+  .fact b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+  .fact b.t{font-size:13px;font-variant-numeric:normal;overflow-wrap:anywhere}
+  .fact.w b{color:var(--amber)}
+  .chg{margin-top:12px;background:var(--amber-bg);border:1px solid #F2E2B8;border-radius:8px;
+    padding:9px 10px;font-size:12.5px}
+  .chg b{color:var(--amber)}
+  .mstrip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+  .mstrip::-webkit-scrollbar{display:none}
+  .mth{flex:0 0 auto;position:relative;width:96px;height:96px;border-radius:8px;overflow:hidden;
+    border:1px solid var(--line);background:#E6EBE8;cursor:pointer}
+  .mth img{width:100%;height:100%;object-fit:cover;display:block}
+  .mth u{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;
+    font-size:10px;text-decoration:none;padding:2px 5px;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .mth i{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px 0 0 -15px;
+    border-radius:50%;background:rgba(0,0,0,.5);border:1.5px solid #fff}
+  .mth i:after{content:'';position:absolute;top:7px;left:10px;border-style:solid;
+    border-width:6px 0 6px 10px;border-color:transparent transparent transparent #fff}
+  .mth.f:before{content:'open';position:absolute;top:50%;left:0;right:0;margin-top:-8px;
+    text-align:center;font-size:11px;color:var(--mute)}
+  .mnone{font-size:12px;color:var(--mute)}
+  .cam{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;
+    background:#E8F0EC;color:var(--green);padding:2px 6px;border-radius:4px}
+  .acts{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap}
+  .btn{flex:1 1 auto;text-align:center;border:1px solid var(--green);background:var(--green);
+    color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;
+    font-family:inherit}
+  .btn.ghost{background:#fff;color:var(--green);text-decoration:none}
+  .hint{font-size:11.5px;color:var(--mute);margin-top:7px;line-height:1.5}
+  .lb{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(9,17,13,.95);z-index:60;
+    display:none;flex-direction:column}
+  .lb.on{display:flex}
+  .lb .x{align-self:flex-end;color:#fff;font-size:27px;line-height:1;padding:10px 18px;
+    cursor:pointer;opacity:.85}
+  .lb .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:0 10px;
+    min-height:0}
+  .lb .stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+  .lb .stage iframe{width:100%;height:100%;border:0;border-radius:6px;background:#000}
+  .lb .cap{color:#fff;font-size:12.5px;padding:12px 18px 2px;opacity:.85;text-align:center;
+    line-height:1.5}
+  .lb .bar2{display:flex;gap:8px;padding:9px 14px 24px;justify-content:center;flex-wrap:wrap}
+  .lb .bar2 a{color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:9px 15px;
+    font-size:13px;text-decoration:none;font-weight:600}
+  .cpbox{width:92%;max-width:520px;height:210px;background:#fff;color:var(--ink);
+    font:12.5px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:10px;border:0;border-radius:8px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--green);
+    color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:70;display:none;
+    box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  .toast.on{display:block}
+  .empty{text-align:center;color:var(--mute);padding:44px 20px;font-size:14px}
+  footer{text-align:center;color:var(--mute);font-size:11.5px;padding:4px 20px 26px;line-height:1.6}
+  @media(min-width:760px){
+    .list,.warn{max-width:900px;margin-left:auto;margin-right:auto}
+    header{padding:16px 24px}
+    .facts{grid-template-columns:repeat(4,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <div class="who2">
+      <div class="ttl">Stock &amp; Rates</div>
+      <div class="sub" id="sub">Divyansh International</div>
+    </div>
+    <button class="rf" id="rf" aria-label="Refresh"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+  </div>
+  <div class="search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input id="q" placeholder="Search product…" autocomplete="off">
+  </div>
+</header>
+
+<div id="gate"></div>
+<div id="status"></div>
+<div id="warn"></div>
+<div class="strips" id="strips"></div>
+<div class="chips" id="chips"></div>
+<div class="subs" id="subs"></div>
+<div class="list" id="list"></div>
+<footer id="foot"></footer>
+
+<div class="lb" id="lb">
+  <div class="x" id="lbx">&times;</div>
+  <div class="stage" id="stage"></div>
+  <div class="cap" id="cap"></div>
+  <div class="bar2" id="lbbar"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- The one line to fill in after deploying the Stock App API project (its /exec URL).
+var API_URL = 'https://script.google.com/macros/s/AKfycbxM8ALbJB5DW4-TXj1QBceAHbTW84yDw5mXEO-nN72ySug_H7Zj3AxhS7bYnTIBioHR-Q/exec';
+
+// Same figures as the sales page: this is buildSalesPayload(), written to the APP FEED tab every
+// 10 minutes and handed out by the API only against a key. Purchase Rate is never in it.
+var DATA = null, ROWS = [], LOC = [], AGE = 30, MED = {};
+var view = 'all', fam = 'ALL', sub = 'ALL', term = '';
+
+// The feed is refreshed every 10 min. Past this, the refresh has stopped - say so.
+var FEED_STALE_MIN = 40;
+
+function lsGet(k){ try { return localStorage.getItem(k); } catch (e){ return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch (e){ return false; } }
+function lsDel(k){ try { localStorage.removeItem(k); } catch (e){} }
+
+// Drive serves these straight to the browser. The files are shared with the company domain only,
+// so a signed-in colleague sees them and an outsider gets nothing - which is the point.
+function mthumb(id){ return 'https://drive.google.com/thumbnail?id='+id+'&sz=w400'; }
+function mbig(id){ return 'https://drive.google.com/thumbnail?id='+id+'&sz=w1600'; }
+function mview(id){ return 'https://drive.google.com/file/d/'+id+'/view'; }
+function mplay(id){ return 'https://drive.google.com/file/d/'+id+'/preview'; }
+function mdl(id){ return 'https://drive.google.com/uc?export=download&id='+id; }
+function mfail(img){ img.style.display='none'; img.parentNode.className += ' f'; }
+
+function nf(v){ return (Math.round(v*100)/100).toLocaleString('en-IN',{maximumFractionDigits:2}); }
+function n0(v){ return Math.round(v).toLocaleString('en-IN'); }
+function isAge(x){ return x.a > 0 && (x.ls === null || x.ls >= AGE); }
+function isChg(x){ return !!x.ch; }
+function isOver(x){ return x.a < 0; }
+// A lot the sales team can actually show a client. Counts PRODUCTS with media, not files, so it
+// reads the same way as the other tiles - every tile is a count of lines.
+function hasMed(x){ var m = MED[x.n]; return !!(m && m.length); }
+function state(x){ if (x.a < 0) return 'd'; if (x.a === 0) return 'n'; return isAge(x) ? 'w' : 'ok'; }
+function val(x){ return (x.a > 0 && x.mn) ? x.a * x.mn : 0; }
+
+function strips(){
+  var s = [
+    {k:'all',  n:ROWS.length,               t:'All lines',    c:''},
+    {k:'age',  n:ROWS.filter(isAge).length, t:'Push these',   c:'w'},
+    {k:'chg',  n:ROWS.filter(isChg).length, t:'Rate changed', c:''},
+    {k:'over', n:ROWS.filter(isOver).length,t:'Oversold',     c:'d'},
+    {k:'med',  n:ROWS.filter(hasMed).length, t:'Photo / video', c:'g'}
+  ];
+  document.getElementById('strips').innerHTML = s.map(function(x){
+    return '<div class="strip '+x.c+(view===x.k?' on':'')+'" data-k="'+x.k+'">'+
+           '<b>'+x.n+'</b><span>'+x.t+'</span></div>';
+  }).join('');
+}
+
+// Row 1: product families, biggest first so the ones they sell most are nearest the thumb.
+function chips(){
+  var n = {};
+  ROWS.forEach(function(x){ n[x.f] = (n[x.f]||0) + 1; });
+  var fs = Object.keys(n).sort(function(a,b){ return n[b]-n[a] || (a<b?-1:1); });
+  document.getElementById('chips').innerHTML =
+    ['<div class="chip'+(fam==='ALL'?' on':'')+'" data-f="ALL">Everything</div>'].concat(
+      fs.map(function(f){
+        return '<div class="chip'+(fam===f?' on':'')+'" data-f="'+esc(f)+'">'+
+               esc(f)+' <span style="opacity:.6">'+n[f]+'</span></div>';
+      })).join('');
+  subChips();
+}
+
+// Row 2: only appears once a family is picked, and only if that family has sub-groups.
+function subChips(){
+  var box = document.getElementById('subs');
+  if (fam === 'ALL'){ box.innerHTML = ''; return; }
+  var n = {};
+  ROWS.forEach(function(x){ if (x.f===fam && x.g) n[x.g] = (n[x.g]||0)+1; });
+  var gs = Object.keys(n).sort(function(a,b){ return n[b]-n[a] || (a<b?-1:1); });
+  if (!gs.length){ box.innerHTML = ''; return; }
+  box.innerHTML = ['<div class="schip'+(sub==='ALL'?' on':'')+'" data-g="ALL">All '+esc(fam)+'</div>'].concat(
+    gs.map(function(g){
+      return '<div class="schip'+(sub===g?' on':'')+'" data-g="'+esc(g)+'">'+
+             esc(g)+' <span style="opacity:.6">'+n[g]+'</span></div>';
+    })).join('');
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function card(x){
+  var tags = '';
+  if (isOver(x)) tags += '<span class="tag d">OVERSOLD</span>';
+  else if (isAge(x)) {
+    tags += '<span class="tag w">' +
+      (x.ls === null ? (DATA.since ? 'NO SALE SINCE ' + DATA.since.toUpperCase() : 'NO SALE ON RECORD')
+                     : 'NO SALE ' + x.ls + 'd') + '</span>';
+  }
+  if (isChg(x)) tags += '<span class="tag p">RATE CHANGED</span>';
+
+  var rate = x.mn ? '<b>&#8377;'+n0(x.mn)+' &ndash; '+n0(x.mx)+'</b><span>per kg</span>'
+                  : '<span class="norate">Rate not set</span>';
+
+  var locs = LOC.map(function(nm,i){
+    var v = x.l[i];
+    return '<div class="loc'+(v===0?' z':'')+(v<0?' neg':'')+'">'+esc(nm)+' &nbsp;<b>'+nf(v)+'</b></div>';
+  }).join('');
+
+  var facts =
+    '<div class="fact"><span>BOOKED</span><b>'+nf(x.b)+'</b></div>'+
+    '<div class="fact"><span>PHYSICAL</span><b>'+nf(x.t)+'</b></div>'+
+    '<div class="fact'+(isAge(x)?' w':'')+'"><span>LAST SOLD</span><b>'+
+      (x.ls===null?'&mdash;':x.ls+'d ago')+'</b></div>'+
+    '<div class="fact'+(x.cov!==null&&x.cov>180?' w':'')+'"><span>DAYS OF COVER</span><b>'+
+      (x.cov===null?'&mdash;':n0(x.cov))+'</b></div>'+
+    '<div class="fact"><span>SELL AS</span><b class="t">'+esc(x.c)+'</b></div>';
+
+  var m = MED[x.n] || [];
+  var media = '<div class="lab">THE LOT</div>';
+  if (m.length){
+    media += '<div class="mstrip">' + m.map(function(f,i){
+      return '<div class="mth" data-p="'+esc(x.n)+'" data-i="'+i+'">'+
+        '<img loading="lazy" alt="" onerror="mfail(this)" src="'+mthumb(f.i)+'">'+
+        (f.k==='v' ? '<i></i>' : '')+
+        (f.d ? '<u>'+esc(f.d)+(f.w?' &middot; '+esc(f.w):'')+'</u>' : '')+
+      '</div>';
+    }).join('') + '</div>' +
+    '<div class="hint">Company photos. To send one to a client, open it and tap Download, then ' +
+    'attach the file &mdash; the link on its own will not open outside Sethi Gold.</div>';
+  } else {
+    media += '<div class="mnone">No photos yet.' +
+             (DATA.pf ? ' Standing at the lot? Tap Add photos below.' : '') + '</div>';
+  }
+
+  var acts = '<div class="acts"><button class="btn" data-cp="'+esc(x.n)+
+             '">Copy for WhatsApp</button>'+
+             (DATA.pf ? '<a class="btn ghost" target="_blank" rel="noopener" href="'+
+               esc(DATA.pf.replace('{P}', encodeURIComponent(x.n)))+'">Add photos</a>' : '')+
+             '</div>';
+
+  var chg = x.ch ? '<div class="chg">'+x.ch.f+' rate moved &#8377;'+n0(x.ch.from)+
+      ' &rarr; <b>&#8377;'+n0(x.ch.to)+'</b> &middot; '+
+      (x.ch.d===0?'today':x.ch.d+' day'+(x.ch.d===1?'':'s')+' ago')+'</div>' : '';
+
+  return '<div class="card"><div class="head">'+
+    '<div class="bar '+state(x)+'"></div>'+
+    '<div class="who"><div class="nm">'+esc(x.n)+'</div>'+
+      '<div class="meta"><span class="qty'+(x.a<0?' neg':'')+'">'+nf(x.a)+' kg</span>'+
+      '<span>'+esc(x.f)+(x.g?' &middot; '+esc(x.g):'')+'</span>'+tags+
+      (m.length?'<span class="cam"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" '+
+        'stroke="currentColor" stroke-width="2.6"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/>'+
+        '<circle cx="12" cy="13" r="3.4"/></svg>'+m.length+'</span>':'')+
+      '</div></div>'+
+    '<div class="rate">'+rate+'</div>'+
+    '<svg class="caret" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>'+
+    '</div><div class="body">'+
+      media+
+      '<div class="lab" style="margin-top:15px">WHERE IT IS</div><div class="locs">'+locs+'</div>'+
+      '<div class="facts">'+facts+'</div>'+chg+acts+
+    '</div></div>';
+}
+
+function render(){
+  var rows = ROWS.filter(function(x){
+    if (fam !== 'ALL' && x.f !== fam) return false;
+    if (fam !== 'ALL' && sub !== 'ALL' && x.g !== sub) return false;
+    if (term && x.n.toLowerCase().indexOf(term) === -1) return false;
+    if (view === 'age')  return isAge(x);
+    if (view === 'chg')  return isChg(x);
+    if (view === 'over') return isOver(x);
+    if (view === 'med')  return hasMed(x);
+    return true;
+  });
+  // Ageing is ranked by cash tied up, not by date - biggest dead money first.
+  if (view === 'age') rows.sort(function(a,b){ return val(b) - val(a); });
+
+  document.getElementById('list').innerHTML = rows.length
+    ? rows.map(card).join('')
+    : '<div class="empty">Nothing matches.</div>';
+  strips(); chips();
+}
+
+document.addEventListener('click', function(e){
+  var s = e.target.closest('.strip');
+  if (s){ view = s.dataset.k; render(); return; }
+  var c = e.target.closest('.chip');
+  if (c){ fam = c.dataset.f; sub = 'ALL'; render(); return; }
+  var g = e.target.closest('.schip');
+  if (g){ sub = g.dataset.g; render(); return; }
+  var t = e.target.closest('.mth');
+  if (t){ openLb(t.getAttribute('data-p'), Number(t.getAttribute('data-i'))); return; }
+  var cp = e.target.closest('[data-cp]');
+  if (cp){ copyFor(cp.getAttribute('data-cp')); return; }
+  if (e.target.id === 'lbx' || e.target.id === 'lb'){ closeLb(); return; }
+  var h = e.target.closest('.head');
+  if (h){ h.parentNode.classList.toggle('open'); }
+});
+
+function openLb(prod, i){
+  var f = (MED[prod] || [])[i];
+  if (!f) return;
+  document.getElementById('stage').innerHTML = f.k === 'v'
+    ? '<iframe src="'+mplay(f.i)+'" allowfullscreen></iframe>'
+    : '<img alt="" src="'+mbig(f.i)+'">';
+  document.getElementById('cap').innerHTML = esc(prod)+
+    (f.d?' &middot; '+esc(f.d):'')+(f.w?' &middot; '+esc(f.w):'')+
+    (f.t?'<br>'+esc(f.t):'');
+  document.getElementById('lbbar').innerHTML =
+    '<a href="'+mdl(f.i)+'" target="_blank" rel="noopener">Download</a>'+
+    '<a href="'+mview(f.i)+'" target="_blank" rel="noopener">Open in Drive</a>';
+  document.getElementById('lb').classList.add('on');
+}
+function closeLb(){
+  document.getElementById('lb').classList.remove('on');
+  document.getElementById('stage').innerHTML = '';
+}
+
+// The message a salesman actually sends. Purchase rate is not in this page's data at all,
+// so it cannot leak into a client's chat - see buildSalesPayload().
+function copyFor(name){
+  var x = null;
+  for (var i = 0; i < ROWS.length; i++) if (ROWS[i].n === name){ x = ROWS[i]; break; }
+  if (!x) return;
+  var m = MED[name] || [], L = [name];
+  L.push('Available: ' + nf(x.a) + ' kg');
+  L.push(x.mn ? 'Rate: Rs ' + n0(x.mn) + ' - ' + n0(x.mx) + ' per kg' : 'Rate: on request');
+  if (x.c) L.push('Sells as: ' + x.c);
+  if (m.length) L.push(m.length + ' photo' + (m.length===1?'':'s') + ' attached separately');
+  L.push('');
+  L.push('Divyansh International Pvt Ltd, Ludhiana');
+  copyText(L.join('\n'));
+}
+function copyText(t){
+  var done = function(){ toast('Copied. Paste it into WhatsApp.'); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done, function(){ legacyCopy(t, done); });
+      return;
+    }
+  } catch (e){}
+  legacyCopy(t, done);
+}
+// A web app runs inside an iframe, where the clipboard API is often refused outright.
+function legacyCopy(t, done){
+  var ta = document.createElement('textarea');
+  ta.value = t;
+  ta.setAttribute('readonly','');
+  ta.style.position = 'fixed';
+  ta.style.top = '-1000px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, t.length); } catch (e){}
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e2){}
+  document.body.removeChild(ta);
+  if (ok) done(); else showManual(t);
+}
+function showManual(t){
+  document.getElementById('stage').innerHTML =
+    '<textarea class="cpbox" readonly>'+esc(t)+'</textarea>';
+  document.getElementById('cap').textContent =
+    'This browser would not let the page copy for you. Select the text and copy it by hand.';
+  document.getElementById('lbbar').innerHTML = '';
+  document.getElementById('lb').classList.add('on');
+  try { document.querySelector('.cpbox').select(); } catch (e){}
+}
+function toast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  setTimeout(function(){ el.classList.remove('on'); }, 2300);
+}
+document.getElementById('q').addEventListener('input', function(e){
+  term = e.target.value.trim().toLowerCase(); render();
+});
+
+function $(id){ return document.getElementById(id); }
+function show(on){
+  ['strips','chips','subs','list','foot','warn'].forEach(function(id){ $(id).style.display = on ? '' : 'none'; });
+  document.querySelector('.search').style.display = on ? '' : 'none';
+}
+
+// Paint whatever feed we hold. A feed that says the source is down shows NO figures - same
+// fail-closed rule as doGet - even though an older good copy may still be in storage.
+function paint(){
+  $('gate').innerHTML = '';
+  if (!DATA){ show(false); return; }
+  if (DATA.down){
+    show(false);
+    $('sub').textContent = 'Figures withheld · not safe to quote from';
+    $('gate').innerHTML = '<div class="gate d"><div class="box">' +
+      '<h1>Stock figures are not available right now</h1>' +
+      '<p><b>Please do not quote stock from memory or from an older screen.</b></p>' +
+      '<p>One of the source files is not reaching the dashboard, so the figures cannot be trusted ' +
+      '&mdash; they can come out far too high, or even negative. Check with the office before ' +
+      'committing any quantity. This clears by itself once the file is reconnected.</p>' +
+      '<p style="color:var(--mute);font-size:12.5px;margin:0">Checked ' + esc(DATA.at || '') + '</p>' +
+      '</div></div>';
+    return;
+  }
+  ROWS = DATA.rows || []; LOC = DATA.locs || []; AGE = DATA.age || 30; MED = DATA.med || {};
+  show(true);
+  $('sub').textContent = 'Available to sell, net of booked orders · ' + DATA.at;
+  $('warn').innerHTML = DATA.noCat > 0
+    ? '<div class="warn"><b>' + DATA.noCat + ' line' + (DATA.noCat===1?'':'s') +
+      ' not shown</b> — no category set on them yet, so they cannot be confirmed as sellable. ' +
+      'Ask the office to set a category on the dashboard.</div>'
+    : '';
+  $('foot').innerHTML =
+    'Ageing = no dispatch for ' + AGE + '+ days. Days of cover = available ÷ average daily dispatch over 90 days.' +
+    (DATA.since ? '<br>Sales history from ' + esc(DATA.since) + ' onwards.' : '') +
+    (DATA.medN ? '<br>' + DATA.medN + ' lot photo' + (DATA.medN===1?'':'s') +
+                 ' on file, visible to Sethi Gold staff only. Photos need a Sethi Gold Google sign-in on this phone.' : '');
+  render();
+}
+
+// The line under the header that says how fresh the figures are. Old figures are never shown
+// silently: past FEED_STALE_MIN the banner turns amber and says not to commit quantity from it.
+var netState = '';   // '', 'checking', 'offline', 'error:<text>'
+function status(){
+  var box = $('status');
+  if (!DATA || DATA.down){ box.innerHTML = netState.indexOf('error:') === 0
+    ? '<div class="alert d">' + esc(netState.slice(6)) + '</div>' : ''; return; }
+  var age = DATA.ts ? Math.round((Date.now() - DATA.ts) / 60000) : null;
+  var span = age === null ? '' : age < 90 ? age + ' min' : Math.round(age / 60) + ' hours';
+  var ago = age === null ? '' : age < 1 ? 'just now' : span + ' ago';
+  if (age !== null && age >= FEED_STALE_MIN){
+    box.innerHTML = '<div class="alert w"><b>These figures are ' + span + ' old.</b> ' +
+      (netState === 'offline' ? 'This phone is offline. ' :
+       netState.indexOf('error:') === 0 ? esc(netState.slice(6)) + ' ' :
+       'The dashboard has stopped refreshing the app. ') +
+      'Check with the office before committing any quantity.</div>';
+  } else if (netState === 'offline'){
+    box.innerHTML = '<div class="alert w">Offline &middot; showing figures from ' + ago + '.</div>';
+  } else if (netState.indexOf('error:') === 0){
+    box.innerHTML = '<div class="alert w">' + esc(netState.slice(6)) + ' Showing figures from ' + ago + '.</div>';
+  } else {
+    box.innerHTML = '';
+  }
+}
+
+function keyGate(msg){
+  show(false);
+  $('status').innerHTML = '';
+  $('sub').textContent = 'Divyansh International';
+  $('gate').innerHTML = '<div class="gate"><div class="box">' +
+    '<h1>Enter your access key</h1>' +
+    '<p>The office gives each person their own key. You only enter it once on this phone.</p>' +
+    (msg ? '<div class="err">' + esc(msg) + '</div>' : '') +
+    '<input id="kin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access key">' +
+    '<button class="btn" id="kgo" style="width:100%">Open stock</button>' +
+    '</div></div>';
+  $('kgo').onclick = function(){
+    var k = $('kin').value.trim();
+    if (k.length < 16){ keyGate('That key is too short. Copy it exactly as the office sent it.'); return; }
+    lsSet('sr_key', k);
+    $('gate').innerHTML = '';
+    pull();
+  };
+}
+
+var pulling = false;
+function pull(){
+  var key = lsGet('sr_key');
+  if (!key){ keyGate(''); return; }
+  if (pulling) return;
+  if (!/^https?:\/\//.test(API_URL)){ netState = 'error:The app is not connected to the API yet.'; status(); return; }
+  pulling = true; netState = 'checking'; $('rf').classList.add('spin');
+  var v = (DATA && lsGet('sr_v')) || '';
+  var url = API_URL + '?k=' + encodeURIComponent(key) + (v ? '&v=' + encodeURIComponent(v) : '') +
+            '&t=' + Date.now();
+  var ctl = ('AbortController' in window) ? new AbortController() : null;
+  var timer = setTimeout(function(){ if (ctl) ctl.abort(); }, 25000);
+  fetch(url, { cache: 'no-store', redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res.ok){
+        if (res.err === 'key'){ lsDel('sr_key'); lsDel('sr_feed'); lsDel('sr_v'); DATA = null;
+          keyGate('This key was not accepted. Ask the office for a new one.'); netState = ''; return; }
+        netState = 'error:' + (res.err === 'busy' ? 'The dashboard was mid-update. Try again in a minute.'
+                                                   : 'The dashboard feed is not set up yet.');
+        return;
+      }
+      netState = '';
+      if (res.same) return;
+      DATA = res.d;
+      lsSet('sr_feed', JSON.stringify(DATA)) && lsSet('sr_v', res.v);
+      paint();
+    })
+    .catch(function(){ netState = navigator.onLine === false ? 'offline' : 'error:Could not reach the dashboard.'; })
+    .then(function(){ clearTimeout(timer); pulling = false; $('rf').classList.remove('spin'); status(); });
+}
+
+$('rf').addEventListener('click', pull);
+// Back from WhatsApp, or the phone woken up: look for newer figures.
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) pull(); });
+window.addEventListener('online', pull);
+setInterval(status, 60000);   // keep "N min ago" honest while the app sits open
+
+// A key can arrive in the invite link, as #k=... (a hash never leaves the phone).
+(function(){
+  var m = /[#&]k=([^&]+)/.exec(location.hash);
+  if (m){ lsSet('sr_key', decodeURIComponent(m[1])); history.replaceState(null, '', location.pathname); }
+})();
+
+// Paint the stored copy first - that is the instant open - then ask for anything newer.
+try { DATA = JSON.parse(lsGet('sr_feed') || 'null'); } catch (e){ DATA = null; }
+if (lsGet('sr_key')){ paint(); status(); }
+pull();
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>
