@@ -209,6 +209,13 @@ function lsGet(k){ try { return localStorage.getItem(k); } catch (e){ return nul
 function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch (e){ return false; } }
 function lsDel(k){ try { localStorage.removeItem(k); } catch (e){} }
 
+// People paste whatever they were sent: the bare key, "#k=KEY", the whole invite link, or the whole
+// log line "tanishk -> #k=KEY". A key is a single run of letters and digits, so take the LAST long run.
+function cleanKey(s){
+  var runs = String(s || '').match(/[A-Za-z0-9]{16,}/g);
+  return runs ? runs[runs.length - 1] : String(s || '').trim();
+}
+
 // Drive serves these straight to the browser. The files are shared with the company domain only,
 // so a signed-in colleague sees them and an outsider gets nothing - which is the point.
 function mthumb(id){ return 'https://drive.google.com/thumbnail?id='+id+'&sz=w400'; }
@@ -531,13 +538,14 @@ function keyGate(msg){
   $('sub').textContent = 'Divyansh International';
   $('gate').innerHTML = '<div class="gate"><div class="box">' +
     '<h1>Enter your access key</h1>' +
-    '<p>The office gives each person their own key. You only enter it once on this phone.</p>' +
+    '<p>The office gives each person their own key. Paste the whole invite link or just the key &mdash; ' +
+    'you only do this once on this phone.</p>' +
     (msg ? '<div class="err">' + esc(msg) + '</div>' : '') +
     '<input id="kin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access key">' +
     '<button class="btn" id="kgo" style="width:100%">Open stock</button>' +
     '</div></div>';
   $('kgo').onclick = function(){
-    var k = $('kin').value.trim();
+    var k = cleanKey($('kin').value);
     if (k.length < 16){ keyGate('That key is too short. Copy it exactly as the office sent it.'); return; }
     lsSet('sr_key', k);
     $('gate').innerHTML = '';
@@ -562,7 +570,8 @@ function pull(){
     .then(function(res){
       if (!res.ok){
         if (res.err === 'key'){ lsDel('sr_key'); lsDel('sr_feed'); lsDel('sr_v'); DATA = null;
-          keyGate('This key was not accepted. Ask the office for a new one.'); netState = ''; return; }
+          keyGate('This key was not accepted (' + key.length + ' characters were sent; a key is 24). ' +
+                  'Paste the whole invite link or just the key, then try again.'); netState = ''; return; }
         netState = 'error:' + (res.err === 'busy' ? 'The dashboard was mid-update. Try again in a minute.'
                                                    : 'The dashboard feed is not set up yet.');
         return;
@@ -586,7 +595,7 @@ setInterval(status, 60000);   // keep "N min ago" honest while the app sits open
 // A key can arrive in the invite link, as #k=... (a hash never leaves the phone).
 (function(){
   var m = /[#&]k=([^&]+)/.exec(location.hash);
-  if (m){ lsSet('sr_key', decodeURIComponent(m[1])); history.replaceState(null, '', location.pathname); }
+  if (m){ lsSet('sr_key', cleanKey(decodeURIComponent(m[1]))); history.replaceState(null, '', location.pathname); }
 })();
 
 // Paint the stored copy first - that is the instant open - then ask for anything newer.

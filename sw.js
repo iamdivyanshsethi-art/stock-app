@@ -1,7 +1,7 @@
 // Keeps the app itself on the phone so it opens with no network wait. Stock figures are NOT
 // cached here - they live in the page's own storage with their timestamp, so an old copy is
 // always labelled as old. Bump VERSION whenever index.html changes.
-var VERSION = 'sr-v3';
+var VERSION = 'sr-v4';
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', function (e) {
